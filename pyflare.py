@@ -1,55 +1,55 @@
 #! /usr/bin/python
-import json, os
+import json
+import os
+from pathlib import Path
 
 import requests
 
+
+def getmyip():
+    r = requests.get("https://api.ipify.org/")
+    return r.text
+
+
 class Cloudflare:
-    def __init__(self, email, key):
+    def __init__(self, key):
         self.endpoint = "https://api.cloudflare.com/client/v4"
-        self.headers = {'X-Auth-Email': email, 'X-Auth-Key': key, 'Content-Type': 'application/json'}
+        self.headers = {'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
 
-    def getmyip(self):
-        r = requests.get("https://api.ipify.org/")
-        return r.text
+    def dns_records(self, zone_id):
+        r = requests.get(self.endpoint + "/zones/" + zone_id + "/dns_records", headers=self.headers)
+        r.raise_for_status()
+        res_data = r.json()
+        assert res_data['success'], 'Error in pulling the DNS records'
+        return res_data
 
-    def user(self):
-        r = requests.get(self.endpoint + "/user", headers=self.headers)
-        return r.json()
+    def update_record(self, zone_id, record, ip_address):
+        payload = {'type': record['type'], 'name': record['name'], 'content': ip_address,
+                   'ttl': record['ttl'], 'proxied': record['proxied']}
+        r = requests.put(self.endpoint + "/zones/" + zone_id + "/dns_records/" + record['id'], headers=self.headers,
+                         data=json.dumps(payload))
+        r.raise_for_status()
+        res_data = r.json()
+        assert res_data['success'], f'Error in updating the record {record}'
+        return res_data
 
-    def zones(self, zone):
-        payload = {'name': zone}
-        r = requests.get(self.endpoint + "/zones", headers=self.headers, params=payload)
-        return r.json()
+    def check_ip(self, zone_id):
+        records = self.dns_records(zone_id)['result']
+        ip_address = getmyip()
+        for record in records:
+            if ip_address != record['content']:
+                self.update_record(zone_id, record, ip_address)
+                print(f'IP updated to {ip_address} for {record["name"]}')
+            else:
+                print(f'{record["name"]} IP ok')
 
-    def dns_records(self, zone_id, record):
-        payload = {'name': record}
-        r = requests.get(self.endpoint + "/zones/" + zone_id + "/dns_records", headers=self.headers, params=payload)
-        return r.json()
-
-    def update_record(self, zone_id, record_id, record, ip_address):
-        payload = {'type': 'A', 'name': record, 'content': ip_address}
-        r = requests.put(self.endpoint + "/zones/" + zone_id + "/dns_records/" + record_id, headers=self.headers, data=json.dumps(payload))
-        return r.json()
-
-    def __call__(self,zone,record):
-        zone_id = cf.zones(zone)['result'][0]['id']
-        record_id = cf.dns_records(zone_id, record)['result'][0]['id']
-        ip_address = cf.getmyip()
-        if ip_address != cf.dns_records(zone_id, record)['result'][0]['content']:
-            return cf.update_record(zone_id, record_id, record, ip_address)
-        else:
-            return "OK"
 
 if __name__ == '__main__':
-	__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-	try:
-		with open(os.path.join(__location__,'config.json')) as json_data_file:
-			config = json.load(json_data_file)
-			email = config['email']
-			key = config['key']
-			zone = config['zone']
-			record = config['record']
-		cf = Cloudflare(email, key)
-		print(cf(zone,record))
-	except IOError:
-		print("Unable to find config file.")
+    creds_path = Path.home() / '.creds' / 'cloudflare.json'
+    try:
+        with open(creds_path) as json_data_file:
+            config = json.load(json_data_file)
+        cf = Cloudflare(config['key'])
+        cf.check_ip(config['zone_id'])
+    except IOError:
+        print("Unable to find config file.")
