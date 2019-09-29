@@ -38,8 +38,6 @@ class Cloudflare:
             if ip_address != record['content']:
                 self.update_record(zone_id, record, ip_address)
                 print(f'IP updated to {ip_address} for {record["name"]}')
-            else:
-                print(f'{record["name"]} IP ok')
 
 
 if __name__ == '__main__':
