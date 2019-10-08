@@ -1,7 +1,21 @@
 import json
+import logging
+import time
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 import requests
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+log_file = Path(__file__).parent / 'logs' / 'pyflare.log'
+ch = RotatingFileHandler(log_file, mode='a', maxBytes=102400, backupCount=2)
+formatter = logging.Formatter('\n%(asctime)s - %(levelname)s - %(message)s',
+                              datefmt='%Y-%m-%d %H:%M:%S')
+formatter.converter = time.gmtime
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+logger.info(Path(__file__).absolute())
 
 
 def getmyip():
@@ -37,7 +51,7 @@ class Cloudflare:
         for record in records:
             if ip_address != record['content']:
                 self.update_record(zone_id, record, ip_address)
-                print(f'IP updated to {ip_address} for {record["name"]}')
+                logger.info(f'IP updated to {ip_address} for {record["name"]}')
 
 
 if __name__ == '__main__':
@@ -47,5 +61,7 @@ if __name__ == '__main__':
             config = json.load(json_data_file)
         cf = Cloudflare(config['key'])
         cf.check_ip(config['zone_id'])
-    except IOError:
-        print("Unable to find config file.")
+    except FileNotFoundError as error:
+        logger.exception(f"Unable to find config file at {creds_path}")
+    except IOError as error:
+        logger.exception(error)
