@@ -15,7 +15,7 @@ formatter = logging.Formatter('\n%(asctime)s - %(levelname)s - %(message)s',
 formatter.converter = time.gmtime
 ch.setFormatter(formatter)
 logger.addHandler(ch)
-logger.info(Path(__file__).absolute())
+logger.debug(log_file)
 
 
 def getmyip():
