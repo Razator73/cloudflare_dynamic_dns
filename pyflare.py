@@ -64,4 +64,4 @@ if __name__ == '__main__':
     except FileNotFoundError as error:
         logger.exception(f"Unable to find config file at {creds_path}")
     except IOError as error:
-        logger.exception(error)
+        logger.warning(error)
