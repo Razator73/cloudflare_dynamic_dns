@@ -56,6 +56,7 @@ class Cloudflare:
 
 
 if __name__ == '__main__':
+    # TODO: move this to a .env file
     creds_path = Path.home() / '.creds' / 'cloudflare.json'
     try:
         with open(creds_path) as json_data_file:
