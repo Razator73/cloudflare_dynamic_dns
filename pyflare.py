@@ -1,11 +1,13 @@
 #!/usr/bin/env pipenv-shebang
 import json
 import logging
+import os
 import time
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 import requests
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -57,14 +59,11 @@ class Cloudflare:
 
 
 if __name__ == '__main__':
-    # TODO: move this to a .env file
-    creds_path = Path.home() / '.creds' / 'cloudflare.json'
+    load_dotenv()
     try:
-        with open(creds_path) as json_data_file:
-            config = json.load(json_data_file)
-        cf = Cloudflare(config['key'])
-        cf.check_ip(config['zone_id'])
-    except FileNotFoundError as error:
-        logger.exception(f"Unable to find config file at {creds_path}")
+        cf = Cloudflare(os.environ['CLOUDFLARE_KEY'])
+        cf.check_ip(os.environ['CLOUDFLARE_ZONE_ID'])
+    except KeyError as error:
+        logger.exception(f"Unable to find proper env variables please check the .env file")
     except IOError as error:
         logger.warning(error)
