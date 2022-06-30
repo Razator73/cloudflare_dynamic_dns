@@ -9,7 +9,8 @@ import requests
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-log_file = Path(__file__).parent / 'logs' / 'pyflare.log'
+log_file = Path.home() / '.logs' / 'pyflare.log'
+log_file.parent.mkdir(exist_ok=True)
 ch = RotatingFileHandler(log_file, mode='a', maxBytes=102400, backupCount=2)
 formatter = logging.Formatter('\n%(asctime)s - %(levelname)s - %(message)s',
                               datefmt='%Y-%m-%d %H:%M:%S')
