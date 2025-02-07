@@ -2,3 +2,4 @@ config.json
 /cron.d/
 logs/pyflare.log*
 /credentials-gmail.json
+*.env
