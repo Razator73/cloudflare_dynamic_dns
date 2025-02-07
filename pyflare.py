@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-log_file = Path.home() / '.logs' / 'pyflare.log'
+log_file = Path.home() / 'logs' / 'pyflare.log'
 log_file.parent.mkdir(exist_ok=True)
 ch = RotatingFileHandler(log_file, mode='a', maxBytes=102400, backupCount=2)
 formatter = logging.Formatter('\n%(asctime)s - %(levelname)s - %(message)s',
