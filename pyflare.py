@@ -53,6 +53,8 @@ class Cloudflare:
         records = self.dns_records(zone_id)['result']
         ip_address = getmyip()
         for record in records:
+            if record['type'] == 'TXT':
+                continue
             if ip_address != record['content'] and 'tunnel' not in record['content']:
                 self.update_record(zone_id, record, ip_address)
                 logger.info(f'IP updated to {ip_address} for {record["name"]}')
